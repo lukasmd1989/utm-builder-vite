@@ -1,0 +1,172 @@
+<template>
+<div class="utm-builder">
+  <h1>UTM Builder</h1>
+  <h2>Create your UTM parameters easily</h2>
+  <div class="form-group">
+    <label for="url">Website URL *</label>
+    <input type="text" id="url" v-model="url" placeholder="e.g., https://www.example.com" required />
+  </div>
+  <div class="form-group">
+    <label for="source">UTM Source *</label>
+    <select id="source" v-model="utmSource" required>
+      <option value="" disabled>Select source</option>
+      <option v-for="source in sources" :key="source" :value="source">{{ source }}</option>
+    </select>
+    <span class="example">e.g., google, facebook, twitter, linkedin, newsletter</span>
+  </div>
+  <div class="form-group">
+    <label for="medium">UTM Medium *</label>
+    <select id="medium" v-model="utmMedium" required>
+      <option value="" disabled>Select medium</option>
+      <option v-for="medium in mediums" :key="medium" :value="medium">{{ medium }}</option>
+    </select>
+    <span class="example">e.g., cpc, email, social, referral</span>
+  </div>
+  <div class="form-group">
+    <label for="campaign">UTM Campaign Name *</label>
+    <input type="text" id="campaign" v-model="utmCampaign" @blur="validateCampaignName" placeholder="Please use the Campaign Name generator!" required />
+    <span v-if="campaignError" class="error">{{ campaignError }}</span>
+  </div>
+  <div class="form-group">
+    <label for="term">UTM Campaign Term</label>
+    <input type="text" id="term" v-model="utmTerm" placeholder="e.g., running shoes" />
+  </div>
+  <div class="form-group">
+    <label for="content">UTM Campaign Content</label>
+    <input type="text" id="content" v-model="utmContent" placeholder="e.g., banner ad" />
+  </div>
+  <div class="form-group">
+    <label for="anchor">Anchor Code</label>
+    <input type="text" id="anchor" v-model="anchor" placeholder="make sure to exclude # at the beginning" />
+  </div>
+  <div class="result">
+    <h3>Generated URL</h3>
+    <input type="text" :value="generatedUrl" readonly />
+    <button @click="copyToClipboard">Copy to Clipboard</button>
+  </div>
+</div>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref, computed } from 'vue';
+
+export default defineComponent({
+name: 'UTMBuilder',
+setup() {
+  const url = ref('');
+  const utmSource = ref('');
+  const utmMedium = ref('');
+  const utmCampaign = ref('');
+  const utmTerm = ref('');
+  const utmContent = ref('');
+  const anchor = ref('');
+  const campaignError = ref('');
+
+  // Add more UTM sources here
+  const sources = ['google', 'facebook', 'twitter', 'linkedin', 'newsletter', 'instagram', 'bing'];
+  
+  // Add more UTM mediums here
+  const mediums = ['cpc', 'email', 'social', 'referral', 'organic', 'display'];
+
+  const validateCampaignName = () => {
+    const pattern = /^[a-zA-Z]{2}_(LC|GC).*/i;
+    if (!pattern.test(utmCampaign.value)) {
+      campaignError.value = 'The campaign name is not in line with the global taxonomy. Please use a correct Campaign Name.';
+    } else {
+      campaignError.value = '';
+    }
+  };
+
+  const generatedUrl = computed(() => {
+    let processedUrl = url.value;
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+      processedUrl = 'https://' + processedUrl;
+    }
+    let generated = `${processedUrl}?utm_source=${utmSource.value}&utm_medium=${utmMedium.value}&utm_campaign=${utmCampaign.value}`;
+    if (utmTerm.value) generated += `&utm_term=${utmTerm.value}`;
+    if (utmContent.value) generated += `&utm_content=${utmContent.value}`;
+    if (anchor.value) generated += `#${anchor.value}`;
+    return generated;
+  });
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedUrl.value);
+    alert('Copied to clipboard!');
+  };
+
+  return {
+    url,
+    utmSource,
+    utmMedium,
+    utmCampaign,
+    utmTerm,
+    utmContent,
+    anchor,
+    sources,
+    mediums,
+    campaignError,
+    generatedUrl,
+    validateCampaignName,
+    copyToClipboard,
+  };
+},
+});
+</script>
+
+<style scoped>
+.utm-builder {
+max-width: 600px;
+margin: 0 auto;
+padding: 2rem;
+border-radius: 8px;
+box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+background-color: #fff;
+}
+.form-group {
+margin-bottom: 1.5rem;
+}
+.form-group label {
+display: block;
+margin-bottom: 0.5rem;
+font-weight: bold;
+}
+.form-group input,
+.form-group select {
+width: 100%;
+padding: 0.5rem;
+border: 1px solid #ccc;
+border-radius: 4px;
+}
+.form-group .example {
+display: block;
+margin-top: 0.5rem;
+font-size: 0.875rem;
+color: #666;
+}
+.form-group .error {
+color: red;
+font-size: 0.875rem;
+margin-top: 0.5rem;
+}
+.result {
+margin-top: 2rem;
+}
+.result input {
+width: calc(100% - 120px);
+margin-right: 1rem;
+padding: 0.5rem;
+border: 1px solid #ccc;
+border-radius: 4px;
+}
+.result button {
+padding: 0.5rem 1rem;
+background-color: #007bff;
+border: none;
+border-radius: 4px;
+color: #fff;
+cursor: pointer;
+}
+.result button:hover {
+background-color: #0056b3;
+}
+</style>
