@@ -8,6 +8,5 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
-  },
-  base: '/utm-builder-vite/' // Replace with your repository name
+  }
 });
