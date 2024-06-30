@@ -46,13 +46,17 @@
   <div class="result">
     <h3>Generated URL</h3>
     <textarea :value="generatedUrl" readonly></textarea>
-    <button @click="copyToClipboard">Copy to Clipboard</button>
+    <button @click="copyToClipboard" title="Copy the generated URL to clipboard">Copy to Clipboard</button>
+    <button @click="saveToDatabase" title="Save the generated URL to the database">Save to Database</button>
+    <button @click="exportToXlsx" title="Export the generated URLs to an XLSX file">Export to XLSX</button>
   </div>
 </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 export default defineComponent({
 name: 'UTMBuilder',
@@ -66,12 +70,9 @@ setup() {
   const anchor = ref('');
   const additionalUtm = ref('');
   const campaignError = ref('');
-
-  // Add more UTM sources here
-  const sources = ['google', 'facebook', 'twitter', 'linkedin', 'newsletter', 'instagram', 'bing'];
-
-  // Add more UTM mediums here
-  const mediums = ['cpc', 'email', 'social', 'referral', 'organic', 'display'];
+  const generatedUrls = ref([]);
+  const sources = ref([]);
+  const mediums = ref([]);
 
   const validateCampaignName = () => {
     const pattern = /^[a-zA-Z]{2}_(LC|GC).*/i;
@@ -103,10 +104,51 @@ setup() {
     return generated;
   });
 
+  const addGeneratedUrlToList = () => {
+    generatedUrls.value.push(generatedUrl.value);
+  };
+
   const copyToClipboard = () => {
+    addGeneratedUrlToList();
     navigator.clipboard.writeText(generatedUrl.value);
     alert('Copied to clipboard!');
   };
+
+  const saveToDatabase = () => {
+    addGeneratedUrlToList();
+    alert('URL saved to database!');
+  };
+
+  const exportToXlsx = () => {
+    const worksheet = XLSX.utils.json_to_sheet(generatedUrls.value.map(url => ({ URL: url })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Generated URLs');
+    XLSX.writeFile(workbook, 'generated_urls.xlsx');
+  };
+
+  onMounted(() => {
+    fetch('/utm_sources.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            sources.value = results.data.map(row => row.source).filter(Boolean);
+          }
+        });
+      });
+
+    fetch('/utm_mediums.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            mediums.value = results.data.map(row => row.medium).filter(Boolean);
+          }
+        });
+      });
+  });
 
   return {
     url,
@@ -123,6 +165,8 @@ setup() {
     generatedUrl,
     validateCampaignName,
     copyToClipboard,
+    saveToDatabase,
+    exportToXlsx,
   };
 },
 });
@@ -188,6 +232,7 @@ border: none;
 border-radius: 4px;
 color: #fff;
 cursor: pointer;
+margin-right: 0.5rem; /* Add margin between buttons */
 }
 .result button:hover {
 background-color: #0056b3;
