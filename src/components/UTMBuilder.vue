@@ -93,10 +93,16 @@ setup() {
     }
 
     let processedUrl = url.value;
+
+    // Ensure the URL starts with "http://" or "https://"
     if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
       processedUrl = 'https://' + processedUrl;
     }
-    let generated = `${processedUrl}?utm_source=${utmSource.value}&utm_medium=${utmMedium.value}&utm_campaign=${utmCampaign.value}`;
+
+    // Check if the original URL already contains "?"
+    const separator = processedUrl.includes('?') ? '&' : '?';
+    
+    let generated = `${processedUrl}${separator}utm_source=${utmSource.value}&utm_medium=${utmMedium.value}&utm_campaign=${utmCampaign.value}`;
     if (utmTerm.value) generated += `&utm_term=${utmTerm.value}`;
     if (utmContent.value) generated += `&utm_content=${utmContent.value}`;
     if (additionalUtm.value) generated += `&${additionalUtm.value}`;
